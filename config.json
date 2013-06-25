@@ -1,0 +1,13 @@
+{
+    "name": "NewSourceCodeCheckin",
+    "className": "CustomApp",
+    "server": "https://test7cluster.rallydev.com",
+    "sdk": "x",
+    "javascript": [
+        "Template.js",
+        "App.js"
+    ],
+    "css": [
+        "app.css"
+    ]
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NewSourceCodeCheckin</title>
+
+    <script type="text/javascript" src="/apps/x/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("Template",{extend:"Ext.Component",alias:"widget.template",cls:"template",tpl:Ext.create("Ext.XTemplate",'<div class="changeset">{[this.getSCMRepositoryInformation(values)]}  Check-in <div style=padding-left:7px;>{[this.getAuthor(values)]}{[this.getRevision(values)]}{[this.getMessage(values)]}{[this.getChangesData(values)]}</div></div>',{getSCMRepositoryInformation:function(values){return values.SCMRepository._refObjectName+" "+values.SCMRepository.SCMType},getAuthor:function(values){return values.Author?"Author: "+values.Author._refObjectName+"<br />":void 0},getRevision:function(values){return values.Revision?"Revision: "+values.Revision+"<br />":void 0},getMessage:function(values){var compactMessage=this.reduceSpaces(values.Message),artifact;if(null===values.Revision){var artifactStore=values.getCollection("Artifacts").load({fetch:["FormattedID"],callback:function(records,operation,success){artifact=records[0]}});return"Message: "+this.formatMessage(compactMessage,artifact)+"<br /><br />"}return id=compactMessage.split(":")[0],theRest=compactMessage.split(":")[1],'Message: <a href="'+Rally.nav.Manager.getDetailUrl(id)+' target="_blank">'+id+"</a>:"+theRest+"<br /><br />"},reduceSpaces:function(message){for(var splitArray=message.split(" "),compactString="",count=0;splitArray.length>count;count++)""!==splitArray[count]&&(compactString+=splitArray[count],compactString+=" ");return compactString=compactString.replace(/\s$/,"")},formatMessage:function(message,artifact){var formattedMsg=message,rallyId=artifact.FormattedID.toLowerCase(),matchStr=message.toLowerCase().match(rallyId);return null!==matchStr&&(formattedMsg=message.slice(0,matchStr.index),formattedMsg+="<a href="+Rally.nav.Manager.getDetailUrl(artifact._ref,!1)+' target="_blank">'+message.slice(matchStr.index,matchStr.index+rallyId.length)+"</a>",formattedMsg+=message.slice(matchStr.index+rallyId.length)),formattedMsg},getChangesData:function(values){var changesDataString="";if(0===values.Changes.length)changesDataString="No Files Affected";else{changesDataString="Files affected by Revision "+values.Revision+"<br />";for(var i=0;values.Changes.length>i;i++)changesDataString+=values.Changes[i].data.Action+" "+"<a href="+values.Changes[i].data.Uri+'target="_blank">'+values.Changes[i].data.PathAndFilename+"</a><br />"}return changesDataString}})});
+                Ext.define("CustomApp",{extend:"Rally.app.App",requires:["Template"],componentCls:"app",items:[{xtype:"container",itemId:"templateContainer"}],launch:function(){Ext.create("Rally.data.WsapiDataStore",{model:"Changeset",autoLoad:!0,fetch:["Revision","Message","SCMRepository","SCMType","Changes","Author","Name","Artifacts"],sorters:[{property:"CreationDate",direction:"DESC"}],pageSize:20,listeners:{load:this._onChangeSetDataLoaded,scope:this}})},_onChangeSetDataLoaded:function(store,records){var newEntry,me=this;Ext.Array.each(records,function(record){var numberChanges=record.getCollection("Changes").initialCount,changesDataString="";if(numberChanges>0)var changesStore=record.getCollection("Changes").load({fetch:["Action","PathAndFilename","Uri"],callback:function(changes,operation,success){var recordData=Ext.clone(record.raw);recordData.Changes=changes,me.down("#templateContainer").add({xtype:"template",componentCls:"changesetContainer",data:recordData})}})},this)}});
+
+            Rally.launchApp('CustomApp', {
+                name:"NewSourceCodeCheckin",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        /*css from old version of app*/;
+.no_data {
+    margin: 20px;
+    text-align: center;
+}
+
+.changeset {
+    padding-top: 3px;
+    padding-bottom: 8px;
+}
+
+.changesetContainer {
+    margin: 5px;
+    border-top: 2px solid #085478; /*std Rally muted blue*/
+}
+    </style>
+</head>
+<body></body>
+</html>
